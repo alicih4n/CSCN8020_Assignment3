@@ -8,6 +8,9 @@ __pycache__/
 *.pyo
 .DS_Store
 
+# Exclude videos folder
+videos/
+
 # Editor & local files
 .vscode/
 .idea/
