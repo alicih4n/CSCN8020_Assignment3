@@ -176,18 +176,46 @@ PYTHONPATH=src python src/dqn/evaluate_dqn.py
 *Evaluates models greedily over 20 benchmark episodes ($\epsilon=0.0$), prints metrics comparison tables, and saves the top model to `models/selected_dqn.pt`.*
 
 ### Step 5: Render 3D Policy in MuJoCo Viewer
+
 * **macOS (Apple Silicon M1/M2/M3)**:
+  *(Note: On macOS Cocoa main thread, use `mjpython` for passive GUI rendering)*
   ```bash
   # Official required step-by-step benchmark viewer:
   PYTHONPATH=src mjpython src/dqn/render_dqn_policy.py
 
-  # Interactive classroom presentation wave demo:
+  # Continuous back-and-forth swing demo:
+  PYTHONPATH=src mjpython src/dqn/render_dqn_continuous.py
+
+  # Interactive classroom presentation & wave demo:
   PYTHONPATH=src mjpython src/demo_class_presentation.py
 
   # Football kick & goal celebration demo:
   PYTHONPATH=src mjpython src/demo_football_kick.py
+
+  # Ultra-smooth fluid Tai-Chi wave demo:
+  PYTHONPATH=src mjpython src/demo_fluid_taichi.py
+
+  # Pen grip & drawing demo:
+  PYTHONPATH=src mjpython src/demo_pen_drawing.py
   ```
-* **Linux / Windows WSL**:
+
+* **Linux / Windows 11 (WSL 2 with WSLg)**:
   ```bash
+  # Official required step-by-step benchmark viewer:
   PYTHONPATH=src python src/dqn/render_dqn_policy.py
+
+  # Continuous back-and-forth swing demo:
+  PYTHONPATH=src python src/dqn/render_dqn_continuous.py
+
+  # Interactive classroom presentation & wave demo:
+  PYTHONPATH=src python src/demo_class_presentation.py
+
+  # Football kick & goal celebration demo:
+  PYTHONPATH=src python src/demo_football_kick.py
+
+  # Ultra-smooth fluid Tai-Chi wave demo:
+  PYTHONPATH=src python src/demo_fluid_taichi.py
+
+  # Pen grip & drawing demo:
+  PYTHONPATH=src python src/demo_pen_drawing.py
   ```
