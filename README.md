@@ -186,6 +186,9 @@ PYTHONPATH=src python src/dqn/evaluate_dqn.py
   # Continuous back-and-forth swing demo:
   PYTHONPATH=src mjpython src/dqn/render_dqn_continuous.py
 
+  # Namaste-G1 multi-joint greeting pose demo:
+  PYTHONPATH=src mjpython src/demo_namaste_pose.py
+
   # Interactive classroom presentation & wave demo:
   PYTHONPATH=src mjpython src/demo_class_presentation.py
 
@@ -206,6 +209,9 @@ PYTHONPATH=src python src/dqn/evaluate_dqn.py
 
   # Continuous back-and-forth swing demo:
   PYTHONPATH=src python src/dqn/render_dqn_continuous.py
+
+  # Namaste-G1 multi-joint greeting pose demo:
+  PYTHONPATH=src python src/demo_namaste_pose.py
 
   # Interactive classroom presentation & wave demo:
   PYTHONPATH=src python src/demo_class_presentation.py
