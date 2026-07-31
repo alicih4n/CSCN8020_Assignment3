@@ -26,7 +26,6 @@ def main() -> None:
     l_elbow_q = model.jnt_qposadr[mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, "left_elbow_joint")]
     l_w_roll_q = model.jnt_qposadr[mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, "left_wrist_roll_joint")]
     l_w_pitch_q = model.jnt_qposadr[mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, "left_wrist_pitch_joint")]
-    l_w_yaw_q = model.jnt_qposadr[mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, "left_wrist_yaw_joint")]
 
     # Right Arm Joint Addresses
     r_pitch_q = model.jnt_qposadr[mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, "right_shoulder_pitch_joint")]
@@ -35,7 +34,6 @@ def main() -> None:
     r_elbow_q = model.jnt_qposadr[mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, "right_elbow_joint")]
     r_w_roll_q = model.jnt_qposadr[mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, "right_wrist_roll_joint")]
     r_w_pitch_q = model.jnt_qposadr[mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, "right_wrist_pitch_joint")]
-    r_w_yaw_q = model.jnt_qposadr[mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, "right_wrist_yaw_joint")]
 
     # Waist Joint Address
     waist_yaw_q = model.jnt_qposadr[mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, "waist_yaw_joint")]
@@ -46,22 +44,18 @@ def main() -> None:
     data.qpos[3:7] = np.array([1, 0, 0, 0])
     mujoco.mj_forward(model, data)
 
-    # Target Namaste Pose Joint Angles
-    # Left Arm
-    l_pitch_target = 0.40
-    l_roll_target = 0.35
-    l_yaw_target = 0.25
-    l_elbow_target = -1.45
+    # Target Symmetrical Namaste Pose Joint Angles
+    l_pitch_target = 0.50
+    l_roll_target = 0.55
+    l_yaw_target = -0.85
+    l_elbow_target = -1.25
     l_w_roll_target = 0.60
-    l_w_pitch_target = 0.30
 
-    # Right Arm (Mirrored)
-    r_pitch_target = 0.40
-    r_roll_target = -0.35
-    r_yaw_target = -0.25
-    r_elbow_target = -1.45
+    r_pitch_target = 0.50
+    r_roll_target = -0.55
+    r_yaw_target = 0.85
+    r_elbow_target = -1.25
     r_w_roll_target = -0.60
-    r_w_pitch_target = 0.30
 
     # Launch viewer
     with mujoco.viewer.launch_passive(model, data) as viewer:
@@ -78,17 +72,17 @@ def main() -> None:
             time.sleep(0.015)
 
         # -------------------------------------------------------------
-        # STAGE 2: ARMS RISING
+        # STAGE 2: ARMS & ELBOWS RISING
         # -------------------------------------------------------------
-        print("[Stage 2: Arms & Elbows Raising Smoothly]")
+        print("[Stage 2: Raising Arms & Flexing Elbows Inward]")
         for i in range(120):
             t = i / 120.0
             smooth_t = 0.5 * (1.0 - math.cos(t * math.pi))  # S-curve interpolation
 
             data.qpos[l_pitch_q] = l_pitch_target * smooth_t
-            data.qpos[l_elbow_q] = -0.70 * smooth_t
+            data.qpos[l_elbow_q] = -0.60 * smooth_t
             data.qpos[r_pitch_q] = r_pitch_target * smooth_t
-            data.qpos[r_elbow_q] = -0.70 * smooth_t
+            data.qpos[r_elbow_q] = -0.60 * smooth_t
 
             data.qfrc_applied[:] = data.qfrc_bias[:]
             mujoco.mj_step(model, data)
@@ -96,9 +90,9 @@ def main() -> None:
             time.sleep(0.012)
 
         # -------------------------------------------------------------
-        # STAGE 3: HANDS ALIGNING & PALMS TOUCHING
+        # STAGE 3: HANDS ALIGNING & PALMS JOINING
         # -------------------------------------------------------------
-        print("[Stage 3: Hands Aligning & Palms Joining in Center]")
+        print("[Stage 3: Aligning Shoulders & Joining Palms in Center]")
         for i in range(150):
             t = i / 150.0
             smooth_t = 0.5 * (1.0 - math.cos(t * math.pi))
@@ -107,17 +101,15 @@ def main() -> None:
             data.qpos[l_pitch_q] = l_pitch_target
             data.qpos[l_roll_q] = l_roll_target * smooth_t
             data.qpos[l_yaw_q] = l_yaw_target * smooth_t
-            data.qpos[l_elbow_q] = -0.70 + (l_elbow_target - (-0.70)) * smooth_t
+            data.qpos[l_elbow_q] = -0.60 + (l_elbow_target - (-0.60)) * smooth_t
             data.qpos[l_w_roll_q] = l_w_roll_target * smooth_t
-            data.qpos[l_w_pitch_q] = l_w_pitch_target * smooth_t
 
-            # Right Arm transition (Mirrored)
+            # Right Arm transition (Symmetrical mirror)
             data.qpos[r_pitch_q] = r_pitch_target
             data.qpos[r_roll_q] = r_roll_target * smooth_t
             data.qpos[r_yaw_q] = r_yaw_target * smooth_t
-            data.qpos[r_elbow_q] = -0.70 + (r_elbow_target - (-0.70)) * smooth_t
+            data.qpos[r_elbow_q] = -0.60 + (r_elbow_target - (-0.60)) * smooth_t
             data.qpos[r_w_roll_q] = r_w_roll_target * smooth_t
-            data.qpos[r_w_pitch_q] = r_w_pitch_target * smooth_t
 
             data.qfrc_applied[:] = data.qfrc_bias[:]
             mujoco.mj_step(model, data)
@@ -127,14 +119,14 @@ def main() -> None:
         # -------------------------------------------------------------
         # STAGE 4: NAMASTE POSE HOLD & GENTLE BOW
         # -------------------------------------------------------------
-        print("\n>>> [Stage 4: NAMASTE POSE ACHIEVED - Holding Steady with Bow] <<<")
+        print("\n>>> [Stage 4: NAMASTE POSE ACHIEVED - Holding Symmetrical Center Pose] <<<")
         for i in range(250):
             t = i * 0.04
-            bow_sway = math.sin(t * 0.5) * 0.05  # Subtle breathing motion
+            bow_sway = math.sin(t * 0.5) * 0.04  # Subtle breathing motion
 
             data.qpos[l_pitch_q] = l_pitch_target + bow_sway
             data.qpos[r_pitch_q] = r_pitch_target + bow_sway
-            data.qpos[waist_yaw_q] = math.sin(t * 0.3) * 0.04  # Gentle center sway
+            data.qpos[waist_yaw_q] = math.sin(t * 0.3) * 0.03
 
             data.qfrc_applied[:] = data.qfrc_bias[:]
             mujoco.mj_step(model, data)
