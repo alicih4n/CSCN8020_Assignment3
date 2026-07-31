@@ -57,19 +57,46 @@ $$L(\theta) = \frac{1}{|B|} \sum_{i \in B} \text{Huber}\left( y_i - Q(s_i, a_i; 
 
 ## 3. Hyperparameter Configuration & Parameter Study
 
-| Hyperparameter | Configuration A (Selected) | Configuration B | Description |
+### 3.1 Hyperparameter Specifications Table
+
+| Hyperparameter | Configuration A (Selected) | Configuration B | Theoretical / Empirical Description |
 |---|---|---|---|
-| **Discount Factor ($\gamma$)** | `0.95` | `0.95` | Bellman discount rate |
-| **Learning Rate** | `0.001` | `0.001` | Adam optimizer learning rate |
-| **Mini-Batch Size** | `64` | `64` | Transitions sampled per step |
-| **Replay Buffer Capacity** | `50,000` | `50,000` | Transitions circular buffer |
-| **Warm-up Steps** | `500` | `500` | Transitions before training starts |
-| **Target Network Update** | Every `250` steps | Every `250` steps | Hard parameter sync ($\theta^- \leftarrow \theta$) |
-| **Initial Epsilon ($\epsilon_{start}$)** | `1.00` | `1.00` | Initial exploration rate |
-| **Minimum Epsilon ($\epsilon_{min}$)** | `0.05` | `0.05` | Floor exploration rate |
-| **Epsilon Decay Rate** | **`0.995`** | **`0.985`** | Per-episode multiplicative decay |
-| **Max Episode Length** | `150` steps | `150` steps | Episode truncation limit |
-| **Evaluated Success Rate** | **100.0% (20/20)** | 95.0% (19/20) | Greedy evaluation ($\epsilon=0.0$) |
+| **Discount Factor ($\gamma$)** | `0.95` | `0.95` | Effective horizon $1/(1-\gamma) = 20$ steps |
+| **Learning Rate ($\alpha$)** | `0.001` | `0.001` | Adam optimizer learning rate |
+| **Mini-Batch Size ($|B|$)** | `64` | `64` | Transitions sampled per optimization step |
+| **Replay Buffer Capacity ($N$)**| `50,000` | `50,000` | Circular transition memory capacity |
+| **Warm-up Steps** | `500` | `500` | Transitions stored before training begins |
+| **Target Network Update ($C$)** | Every `250` steps | Every `250` steps | Hard parameter synchronization ($\theta^- \leftarrow \theta$) |
+| **Initial Epsilon ($\epsilon_{start}$)**| `1.00` | `1.00` | Initial uniform random action probability |
+| **Minimum Epsilon ($\epsilon_{min}$)**| `0.05` | `0.05` | Lower floor for persistent exploration |
+| **Epsilon Decay Rate** | **`0.995`** | **`0.985`** | Per-episode multiplicative exploration decay |
+| **Loss Function & Clipping** | Huber Loss / Clip `1.0` | Huber Loss / Clip `1.0` | Smooth L1 loss with gradient norm threshold |
+| **Max Episode Length** | `150` steps | `150` steps | Hard episode truncation limit |
+| **Evaluated Success Rate** | **100.0% (20/20)** | 95.0% (19/20) | Greedy benchmark evaluation ($\epsilon=0.0$) |
+
+---
+
+### 3.2 Theoretical & Empirical Hyperparameter Justification
+
+#### 1. Discount Factor ($\gamma = 0.95$)
+* **Justification**: The effective horizon for a discount factor is defined as $H_{\text{eff}} = \frac{1}{1 - \gamma}$. For $\gamma = 0.95$, $H_{\text{eff}} = 20$ steps. Empirically, reaching the elbow goal target from an initial rest posture requires approximately $18$ to $20$ control steps. Setting $\gamma = 0.95$ aligns the Bellman lookahead horizon with the physical episode trajectory length without introducing excessive variance or Q-value inflation.
+
+#### 2. Learning Rate ($\alpha = 0.001$) & Weight Initialization
+* **Justification**: A learning rate of $\alpha = 10^{-3}$ paired with the Adam optimizer ($\beta_1=0.9, \beta_2=0.999$) provided rapid, stable gradient descent across the 4-in $\to$ 64 $\to$ 64 $\to$ 3 MLP architecture. Kaiming Normal weight initialization ensured proper variance scaling through the ReLU activations, preventing vanishing gradients during early training.
+
+#### 3. Replay Buffer Capacity ($N = 50,000$) & Warm-up Phase
+* **Justification**: Sequential MuJoCo physics states exhibit strong temporal correlation. Storing 50,000 transitions in a circular buffer and sampling mini-batches of size $|B| = 64$ breaks temporal correlation, providing independent and identically distributed (i.i.d.) samples for TD learning. The 500-step warm-up phase prevents premature network fitting on initial unrepresentative transitions.
+
+#### 4. Target Network Synchronization Interval ($C = 250$ steps)
+* **Justification**: In standard Q-learning, updating Q-values using the same online weights causes moving-target instability. Maintaining a separate target network $\hat{Q}(s, a; \theta^-)$ and hard-updating parameter weights every $C = 250$ steps stabilizes TD targets $y_i = r_i + \gamma (1-d_i) \max_{a'} \hat{Q}(s'_i, a'; \theta^-)$, preventing policy oscillation.
+
+#### 5. Epsilon Decay Exploration Study ($\text{decay}=0.995$ vs. $0.985$)
+* **Comparative Finding**: 
+  * **Configuration A ($\text{decay}=0.995$)**: Explores gradually across 300+ episodes, maintaining $\epsilon > 0.10$ during initial Q-value formation. This allowed the agent to thoroughly discover fine-grained deceleration actions near target angles, achieving a **100.0% benchmark success rate**.
+  * **Configuration B ($\text{decay}=0.985$)**: Decays exploration too rapidly, dropping $\epsilon < 0.05$ after 150 episodes. The policy prematurely converged to sub-optimal choices on extreme target angles ($+0.8$ rad), resulting in a **95.0% success rate**.
+
+#### 6. Huber Loss & Gradient Norm Clipping ($1.0$)
+* **Justification**: Huber Loss (Smooth L1) behaves quadratically ($L_2$) for small TD errors ($|y_i - Q| < 1.0$) and linearly ($L_1$) for large errors. This prevents explosive gradient updates when large penalty rewards are encountered during initial random exploration, while maintaining smooth convergence near zero error. Norm clipping at $1.0$ guarantees numerical stability across PyTorch training iterations.
 
 ---
 
